@@ -1,0 +1,12 @@
+baseUrl = "https://jira"
+login = ""
+password = ""
+
+[[actions]]
+keys = ["KEY-1", "KEY-2", "KEY-3"]
+getActualKey = true
+
+jql = 'labels = "my_label"'
+
+removeLabels = ["label-1", "label-2"]
+addLabels = ["new-label-1", "new-label-2"]
