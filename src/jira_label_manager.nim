@@ -4,11 +4,9 @@ import toml_serialization
 
 type
   ConfigActions* = object
-    keys*: seq[string]
-    getActualKey*: bool
     jql*: string
-    removeLabels*: seq[string]
-    addLabels*: seq[string]
+    removeLabels*: Option[seq[string]]
+    addLabels*: Option[seq[string]]
 
 
   Config* = object
