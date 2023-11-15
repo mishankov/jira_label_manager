@@ -10,3 +10,11 @@ jql = 'labels = "my_label"'
 
 removeLabels = ["label-1", "label-2"]
 addLabels = ["new-label-1", "new-label-2"]
+
+
+[[actions]]
+keys = ["KEY-1", "KEY-2", "KEY-3"]
+
+jql = 'labels = "my_label"'
+
+addLabels = ["new-label-1", "new-label-2"]

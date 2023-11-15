@@ -1,5 +1,24 @@
-# This is just an example to get you started. A typical binary package
-# uses this file as the main entry point of the application.
+import toml_serialization
+
+type
+  ConfigActions* = object
+    keys*: seq[string]
+    getActualKey*: bool
+    jql*: string
+    removeLabels*: seq[string]
+    addLabels*: seq[string]
+
+
+  Config* = object
+    baseUrl*: string
+    login*: string
+    password*: string
+    actions*: seq[ConfigActions]
+
+
+proc loadConfig*(filePath: string): Config =
+  return Toml.loadFile(filePath, Config)
+
 
 when isMainModule:
-  echo("Hello, World!")
+  echo loadConfig("config.example.toml")

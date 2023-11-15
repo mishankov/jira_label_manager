@@ -10,7 +10,7 @@ bin           = @["jira_label_manager"]
 
 # Dependencies
 
-requires "nim >= 2.0.0"
+requires "nim >= 2.0.0", "toml_serialization >= 0.2.6"
 
 
 task dev, "Dev":
