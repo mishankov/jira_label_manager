@@ -15,7 +15,7 @@ type
     password*: string
     actions*: seq[ConfigActions]
 
-  CLIArgs* = object
+  CliArgs* = object
     configFilePath*: string
     requestedHelp*: bool
 
@@ -23,10 +23,10 @@ type
 proc loadConfig*(filePath: string): Config =
   return Toml.loadFile(filePath, Config)
 
-proc parseCliArgs(): CLIArgs =
-  var args = CLIArgs()
+proc parseCliArgs(rawArgs: seq[string]): CliArgs =
+  var args = CliArgs()
 
-  for param in commandLineParams():
+  for param in rawArgs:
     var parser = initOptParser(param)
     
     for kind, key, val in parser.getopt():
@@ -44,7 +44,7 @@ proc parseCliArgs(): CLIArgs =
   return args
 
 when isMainModule:
-  let cliArgs = parseCliArgs()
+  let cliArgs = parseCliArgs(commandLineParams())
 
   if cliArgs.requestedHelp:
     echo "Jira Label Manager CLI"
