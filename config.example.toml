@@ -13,3 +13,6 @@ addLabels = ["new-label-1", "new-label-2"]
 jql = 'labels = "my_label"'
 
 addLabels = ["new-label-1", "new-label-2"]
+
+[[actions]]
+jql = 'labels = "my_label"'

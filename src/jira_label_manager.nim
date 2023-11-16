@@ -8,7 +8,6 @@ type
     removeLabels*: Option[seq[string]]
     addLabels*: Option[seq[string]]
 
-
   Config* = object
     baseUrl*: string
     login*: string
@@ -19,11 +18,15 @@ type
     configFilePath*: string
     requestedHelp*: bool
 
+  JiraTask* = object
+    key*: string
+    summary*: string
+
 
 proc loadConfig*(filePath: string): Config =
   return Toml.loadFile(filePath, Config)
 
-proc parseCliArgs(rawArgs: seq[string]): CliArgs =
+proc parseCliArgs*(rawArgs: seq[string]): CliArgs =
   var args = CliArgs()
 
   for param in rawArgs:
@@ -43,6 +46,17 @@ proc parseCliArgs(rawArgs: seq[string]): CliArgs =
   
   return args
 
+proc getJiraTasks*(jql: string): seq[JiraTask] =
+  echo "getJiraTasks"
+  return @[JiraTask()]
+
+proc removeLabelFromTask*(taskKey: string, label: string) =
+  echo "removeLabelFromTask"
+
+proc addLabelToTask*(taskKey: string, label: string) =
+  echo "addLabelToTask" 
+
+
 when isMainModule:
   let cliArgs = parseCliArgs(commandLineParams())
 
@@ -51,4 +65,17 @@ when isMainModule:
     echo "<ARGUMENT>:   path to config file"
     echo "--help, -h:   prints this message"
   else:
-    echo loadConfig(cliArgs.configFilePath)
+    let config = loadConfig(cliArgs.configFilePath)
+
+    for action in config.actions:
+      if action.removeLabels.isSome() or action.addLabels.isSome():
+        let jiraTasks = getJiraTasks(action.jql)
+
+        for jiraTask in jiraTasks:
+          if action.removeLabels.isSome():
+            for labelToRemove in action.removeLabels.get():
+              removeLabelFromTask(jiraTask.key, labelToRemove)
+
+          if action.addLabels.isSome():
+            for labelToAdd in action.addLabels.get():
+              addLabelToTask(jiraTask.key, labelToAdd)
