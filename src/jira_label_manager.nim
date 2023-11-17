@@ -10,10 +10,13 @@ type
 
   Config* = object
     baseUrl*: string
-    login*: string
-    password*: string
+    authConfigPath*: string
     actions*: seq[ConfigActions]
 
+  AuthConfig* = object
+    login*: string
+    password*: string
+    
   CliArgs* = object
     configFilePath*: string
     requestedHelp*: bool
