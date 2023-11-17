@@ -76,11 +76,35 @@ proc getJiraTasks*(jql: string, config: Config, action: ConfigActions): seq[Jira
 
   return result
 
-proc removeLabelFromTask*(taskKey: string, label: string) =
-  echo "removeLabelFromTask"
+proc removeLabelFromTask*(taskKey: string, label: string, config: Config) =
+  let 
+    authConfig = loadAuthConfig(config.authConfigPath)
+    headers = { "Content-Type": "application/json", "Authorization": basicAuthHeader(authConfig.login, authConfig.password) }
+    url = config.baseUrl & "/rest/api/latest/issue/" & taskKey
+    body = %*{"update": {"labels": [{"remove": label}]}}
 
-proc addLabelToTask*(taskKey: string, label: string) =
-  echo "addLabelToTask" 
+  var client = newHttpClient(sslContext=newContext(verifyMode=CVerifyNone))
+  client.headers = newHttpHeaders(headers)
+
+  let response = client.request(url, httpMethod = HttpPut, body = $body)
+  client.close()
+
+  echo fmt"Removed label {label} from {taskKey} {response.status} {response.body}"
+
+proc addLabelToTask*(taskKey: string, label: string, config: Config) =
+  let 
+    authConfig = loadAuthConfig(config.authConfigPath)
+    headers = { "Content-Type": "application/json", "Authorization": basicAuthHeader(authConfig.login, authConfig.password) }
+    url = config.baseUrl & "/rest/api/latest/issue/" & taskKey
+    body = %*{"update": {"labels": [{"add": label}]}}
+
+  var client = newHttpClient(sslContext=newContext(verifyMode=CVerifyNone))
+  client.headers = newHttpHeaders(headers)
+
+  let response = client.request(url, httpMethod = HttpPut, body = $body)
+  client.close()
+
+  echo fmt"Added label {label} to {taskKey} {response.status} {response.body}"
 
 
 when isMainModule:
@@ -100,8 +124,8 @@ when isMainModule:
         for jiraTask in jiraTasks:
           if action.removeLabels.isSome():
             for labelToRemove in action.removeLabels.get():
-              removeLabelFromTask(jiraTask.key, labelToRemove)
+              removeLabelFromTask(jiraTask.key, labelToRemove, config)
 
           if action.addLabels.isSome():
             for labelToAdd in action.addLabels.get():
-              addLabelToTask(jiraTask.key, labelToAdd)
+              addLabelToTask(jiraTask.key, labelToAdd, config)
