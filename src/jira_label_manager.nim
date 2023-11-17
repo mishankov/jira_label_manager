@@ -1,4 +1,4 @@
-import os, parseopt
+import os, parseopt, httpclient, strformat, base64, uri, json, net
 
 import toml_serialization
 
@@ -29,6 +29,9 @@ type
 proc loadConfig*(filePath: string): Config =
   return Toml.loadFile(filePath, Config)
 
+proc loadAuthConfig*(filePath: string): AuthConfig =
+  return Toml.loadFile(filePath, AuthConfig)
+
 proc parseCliArgs*(rawArgs: seq[string]): CliArgs =
   var args = CliArgs()
 
@@ -49,9 +52,29 @@ proc parseCliArgs*(rawArgs: seq[string]): CliArgs =
   
   return args
 
-proc getJiraTasks*(jql: string): seq[JiraTask] =
-  echo "getJiraTasks"
-  return @[JiraTask()]
+proc basicAuthHeader*(login: string, password: string): string = 
+  let strToEncode = login & ":" & password;
+  return fmt"Basic {encode(strToEncode)}"
+
+proc getJiraTasks*(jql: string, config: Config, action: ConfigActions): seq[JiraTask] =
+  let 
+    authConfig = loadAuthConfig(config.authConfigPath)
+    headers = { "Content-Type": "application/json", "Authorization": basicAuthHeader(authConfig.login, authConfig.password) }
+    url = config.baseUrl & "/rest/api/latest/search?" & encodeQuery({"jql": action.jql}, false)
+
+  var client = newHttpClient(sslContext=newContext(verifyMode=CVerifyNone))
+  client.headers = newHttpHeaders(headers)
+
+  let response = client.request(url)
+  client.close()
+
+  let payloadJson = parseJson(response.body)
+  echo "Tasks for jql \"", action.jql, "\":"
+  for issue in payloadJson["issues"]: 
+    echo issue["key"].getStr(), " - ", issue["fields"]["summary"].getStr()
+    result.add(JiraTask(key: issue["key"].getStr(), summary: issue["fields"]["summary"].getStr())) 
+
+  return result
 
 proc removeLabelFromTask*(taskKey: string, label: string) =
   echo "removeLabelFromTask"
@@ -72,7 +95,7 @@ when isMainModule:
 
     for action in config.actions:
       if action.removeLabels.isSome() or action.addLabels.isSome():
-        let jiraTasks = getJiraTasks(action.jql)
+        let jiraTasks = getJiraTasks(action.jql, config, action)
 
         for jiraTask in jiraTasks:
           if action.removeLabels.isSome():
