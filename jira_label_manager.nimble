@@ -20,3 +20,6 @@ task dev, "Dev":
 task test_help, "Test help":
     exec "nimble c --cpu:amd64 -o:build/jira_label_manager_release src/jira_label_manager"
     exec "build/jira_label_manager.exe --help"
+
+task release, "Release":
+    exec "nimble c --cpu:amd64 -d:ssl -d:release -f:on -o:build/jira_label_manager_release src/jira_label_manager -y"
