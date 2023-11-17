@@ -1,6 +1,6 @@
-import os, parseopt, strformat, base64, uri, json
+import os, parseopt, httpclient, strformat, base64, uri, json, net
 
-import toml_serialization, puppy
+import toml_serialization
 
 type
   ConfigActions* = object
@@ -59,10 +59,14 @@ proc basicAuthHeader*(login: string, password: string): string =
 proc getJiraTasks*(jql: string, config: Config, action: ConfigActions): seq[JiraTask] =
   let 
     authConfig = loadAuthConfig(config.authConfigPath)
-    response = get(
-      config.baseUrl & "/rest/api/latest/search?" & encodeQuery({"jql": action.jql}, false),
-      headers = @[("Content-Type", "application/json"), ("Authorization", basicAuthHeader(authConfig.login, authConfig.password))]
-    )
+    headers = { "Content-Type": "application/json", "Authorization": basicAuthHeader(authConfig.login, authConfig.password) }
+    url = config.baseUrl & "/rest/api/latest/search?" & encodeQuery({"jql": action.jql}, false)
+
+  var client = newHttpClient(sslContext=newContext(verifyMode=CVerifyNone))
+  client.headers = newHttpHeaders(headers)
+
+  let response = client.request(url)
+  client.close()
 
   let payloadJson = parseJson(response.body)
   echo "Tasks for jql \"", action.jql, "\":"
@@ -75,26 +79,32 @@ proc getJiraTasks*(jql: string, config: Config, action: ConfigActions): seq[Jira
 proc removeLabelFromTask*(taskKey: string, label: string, config: Config) =
   let 
     authConfig = loadAuthConfig(config.authConfigPath)
+    headers = { "Content-Type": "application/json", "Authorization": basicAuthHeader(authConfig.login, authConfig.password) }
+    url = config.baseUrl & "/rest/api/latest/issue/" & taskKey
     body = %*{"update": {"labels": [{"remove": label}]}}
-    _ = put(
-      config.baseUrl & "/rest/api/latest/issue/" & taskKey,
-      headers = @[("Content-Type", "application/json"), ("Authorization", basicAuthHeader(authConfig.login, authConfig.password))],
-      body = $body
-    )
 
-  echo fmt"Removed label {label} from {taskKey}"
+  var client = newHttpClient(sslContext=newContext(verifyMode=CVerifyNone))
+  client.headers = newHttpHeaders(headers)
+
+  let response = client.request(url, httpMethod = HttpPut, body = $body)
+  client.close()
+
+  echo fmt"Removed label {label} from {taskKey} {response.status} {response.body}"
 
 proc addLabelToTask*(taskKey: string, label: string, config: Config) =
   let 
     authConfig = loadAuthConfig(config.authConfigPath)
+    headers = { "Content-Type": "application/json", "Authorization": basicAuthHeader(authConfig.login, authConfig.password) }
+    url = config.baseUrl & "/rest/api/latest/issue/" & taskKey
     body = %*{"update": {"labels": [{"add": label}]}}
-    _ = put(
-      config.baseUrl & "/rest/api/latest/issue/" & taskKey,
-      headers = @[("Content-Type", "application/json"), ("Authorization", basicAuthHeader(authConfig.login, authConfig.password))],
-      body = $body
-    )
 
-  echo fmt"Added label {label} to {taskKey}"
+  var client = newHttpClient(sslContext=newContext(verifyMode=CVerifyNone))
+  client.headers = newHttpHeaders(headers)
+
+  let response = client.request(url, httpMethod = HttpPut, body = $body)
+  client.close()
+
+  echo fmt"Added label {label} to {taskKey} {response.status} {response.body}"
 
 
 when isMainModule:

@@ -11,14 +11,12 @@ bin           = @["jira_label_manager"]
 
 # Dependencies
 
-requires "nim >= 2.0.0", "toml_serialization >= 0.2.6", "puppy >= 2.1.0"
+requires "nim >= 2.0.0", "toml_serialization >= 0.2.6"
 
 
 task dev, "Dev":
-    exec "nimble run --cpu:amd64 jira_label_manager config.toml"
+    exec "nimble run --cpu:amd64 -d:ssl jira_label_manager config.toml"
 
 task test_help, "Test help":
+    exec "nimble c --cpu:amd64 -o:build/jira_label_manager_release src/jira_label_manager"
     exec "build/jira_label_manager.exe --help"
-
-task release, "Release":
-    exec "nimble c --cpu:amd64 -d:release -f:on -o:build/jira_label_manager_release src/jira_label_manager -y"
