@@ -1,6 +1,8 @@
-import os, parseopt, httpclient, strformat, base64, uri, json, net
+import os, parseopt
 
 import toml_serialization
+
+import jira
 
 type
   ConfigActions* = object
@@ -20,10 +22,6 @@ type
   CliArgs* = object
     configFilePath*: string
     requestedHelp*: bool
-
-  JiraTask* = object
-    key*: string
-    summary*: string
 
 
 proc loadConfig*(filePath: string): Config =
@@ -52,60 +50,6 @@ proc parseCliArgs*(rawArgs: seq[string]): CliArgs =
   
   return args
 
-proc basicAuthHeader*(login: string, password: string): string = 
-  let strToEncode = login & ":" & password;
-  return fmt"Basic {encode(strToEncode)}"
-
-proc getJiraTasks*(jql: string, config: Config, action: ConfigActions): seq[JiraTask] =
-  let 
-    authConfig = loadAuthConfig(config.authConfigPath)
-    headers = { "Content-Type": "application/json", "Authorization": basicAuthHeader(authConfig.login, authConfig.password) }
-    url = config.baseUrl & "/rest/api/latest/search?" & encodeQuery({"jql": action.jql}, false)
-
-  var client = newHttpClient(sslContext=newContext(verifyMode=CVerifyNone))
-  client.headers = newHttpHeaders(headers)
-
-  let response = client.request(url)
-  client.close()
-
-  let payloadJson = parseJson(response.body)
-  echo "Tasks for jql \"", action.jql, "\":"
-  for issue in payloadJson["issues"]: 
-    echo issue["key"].getStr(), " - ", issue["fields"]["summary"].getStr()
-    result.add(JiraTask(key: issue["key"].getStr(), summary: issue["fields"]["summary"].getStr())) 
-
-  return result
-
-proc removeLabelFromTask*(taskKey: string, label: string, config: Config) =
-  let 
-    authConfig = loadAuthConfig(config.authConfigPath)
-    headers = { "Content-Type": "application/json", "Authorization": basicAuthHeader(authConfig.login, authConfig.password) }
-    url = config.baseUrl & "/rest/api/latest/issue/" & taskKey
-    body = %*{"update": {"labels": [{"remove": label}]}}
-
-  var client = newHttpClient(sslContext=newContext(verifyMode=CVerifyNone))
-  client.headers = newHttpHeaders(headers)
-
-  let response = client.request(url, httpMethod = HttpPut, body = $body)
-  client.close()
-
-  echo fmt"Removed label {label} from {taskKey} {response.status} {response.body}"
-
-proc addLabelToTask*(taskKey: string, label: string, config: Config) =
-  let 
-    authConfig = loadAuthConfig(config.authConfigPath)
-    headers = { "Content-Type": "application/json", "Authorization": basicAuthHeader(authConfig.login, authConfig.password) }
-    url = config.baseUrl & "/rest/api/latest/issue/" & taskKey
-    body = %*{"update": {"labels": [{"add": label}]}}
-
-  var client = newHttpClient(sslContext=newContext(verifyMode=CVerifyNone))
-  client.headers = newHttpHeaders(headers)
-
-  let response = client.request(url, httpMethod = HttpPut, body = $body)
-  client.close()
-
-  echo fmt"Added label {label} to {taskKey} {response.status} {response.body}"
-
 
 when isMainModule:
   let cliArgs = parseCliArgs(commandLineParams())
@@ -116,16 +60,18 @@ when isMainModule:
     echo "--help, -h:   prints this message"
   else:
     let config = loadConfig(cliArgs.configFilePath)
+    let authConfig = loadAuthConfig(config.authConfigPath)
+    let jira = Jira(baseUrl: config.baseUrl, login: authConfig.login, password: authConfig.password)
 
     for action in config.actions:
       if action.removeLabels.isSome() or action.addLabels.isSome():
-        let jiraTasks = getJiraTasks(action.jql, config, action)
+        let jiraTasks = jira.getJiraTasks(action.jql)
 
         for jiraTask in jiraTasks:
           if action.removeLabels.isSome():
             for labelToRemove in action.removeLabels.get():
-              removeLabelFromTask(jiraTask.key, labelToRemove, config)
+              jira.removeLabelFromTask(jiraTask.key, labelToRemove)
 
           if action.addLabels.isSome():
             for labelToAdd in action.addLabels.get():
-              addLabelToTask(jiraTask.key, labelToAdd, config)
+              jira.addLabelToTask(jiraTask.key, labelToAdd)

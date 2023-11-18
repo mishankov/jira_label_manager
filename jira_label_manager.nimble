@@ -1,3 +1,5 @@
+import strformat
+
 # Package
 
 version       = "0.1.0"
@@ -18,8 +20,7 @@ task dev, "Dev":
     exec "nimble run --cpu:amd64 -d:ssl jira_label_manager config.toml"
 
 task test_help, "Test help":
-    exec "nimble c --cpu:amd64 -o:build/jira_label_manager_release src/jira_label_manager"
     exec "build/jira_label_manager.exe --help"
 
 task release, "Release":
-    exec "nimble c --cpu:amd64 -d:ssl -d:release -f:on -o:build/jira_label_manager_release src/jira_label_manager -y"
+    exec fmt"nimble c --cpu:amd64 -d:ssl -d:release -f:on -o:build/jira_label_manager_{version}.exe src/jira_label_manager -y"
