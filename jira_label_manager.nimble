@@ -16,8 +16,11 @@ bin           = @["jira_label_manager"]
 requires "nim >= 2.0.0", "toml_serialization >= 0.2.6"
 
 
-task dev, "Dev":
+task devc, "Dev config":
     exec "nimble run --cpu:amd64 -d:ssl jira_label_manager config.toml"
+
+task devi, "Dev interactive":
+    exec "nimble run --cpu:amd64 -d:ssl jira_label_manager"
 
 task test_help, "Test help":
     exec "build/jira_label_manager.exe --help"
