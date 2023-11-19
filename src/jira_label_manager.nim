@@ -70,8 +70,8 @@ when isMainModule:
         for jiraTask in jiraTasks:
           if action.removeLabels.isSome():
             for labelToRemove in action.removeLabels.get():
-              jira.removeLabelFromTask(jiraTask.key, labelToRemove)
+              jira.labelAction(jiraTask.key, remove, labelToRemove)
 
           if action.addLabels.isSome():
             for labelToAdd in action.addLabels.get():
-              jira.addLabelToTask(jiraTask.key, labelToAdd)
+              jira.labelAction(jiraTask.key, add, labelToAdd)

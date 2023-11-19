@@ -1,4 +1,4 @@
-import uri, httpclient, net, json, strformat
+import json, strformat
 
 import httpreq
 
@@ -11,49 +11,39 @@ type
     key*: string
     summary*: string
 
+  JiraTaskAction* = enum add, remove
+
 proc getJiraTasks*(jira: Jira, jql: string): seq[JiraTask] =
-  let 
-    headers = { "Content-Type": "application/json", "Authorization": basicAuthHeader(jira.login, jira.password) }
-    url = jira.baseUrl & "/rest/api/latest/search?" & encodeQuery({"jql": jql}, false)
+  let response = get(
+    url = jira.baseUrl & "/rest/api/latest/search",
+    queryParams = {"jql": jql},
+    headers = {"Content-Type": "application/json"},
+    auth = (jira.login, jira.password),
+    ignoreSsl = true
+  )
 
-  var client = newHttpClient(sslContext=newContext(verifyMode=CVerifyNone))
-  client.headers = newHttpHeaders(headers)
+  if response.ok():
+    let payloadJson = response.json()
+    echo "Tasks for jql \"", jql, "\":"
+    for issue in payloadJson["issues"]: 
+      echo issue["key"].getStr(), " - ", issue["fields"]["summary"].getStr()
+      result.add(JiraTask(key: issue["key"].getStr(), summary: issue["fields"]["summary"].getStr())) 
 
-  let response = client.request(url)
-  client.close()
+    return result
+  else:
+    echo fmt"Error: {response.status}, {response.body}"
 
-  let payloadJson = parseJson(response.body)
-  echo "Tasks for jql \"", jql, "\":"
-  for issue in payloadJson["issues"]: 
-    echo issue["key"].getStr(), " - ", issue["fields"]["summary"].getStr()
-    result.add(JiraTask(key: issue["key"].getStr(), summary: issue["fields"]["summary"].getStr())) 
 
-  return result
+proc labelAction*(jira: Jira, taskKey: string, action: JiraTaskAction, label: string) = 
+  let response = put(
+    url = jira.baseUrl & "/rest/api/latest/issue/" & taskKey,
+    headers = {"Content-Type": "application/json"},
+    body = $ %*{"update": {"labels": [{$action: label}]}},
+    auth = (jira.login, jira.password),
+    ignoreSsl = true
+  )
 
-proc removeLabelFromTask*(jira: Jira, taskKey: string, label: string) =
-  let 
-    headers = { "Content-Type": "application/json", "Authorization": basicAuthHeader(jira.login, jira.password) }
-    url = jira.baseUrl & "/rest/api/latest/issue/" & taskKey
-    body = %*{"update": {"labels": [{"remove": label}]}}
-
-  var client = newHttpClient(sslContext=newContext(verifyMode=CVerifyNone))
-  client.headers = newHttpHeaders(headers)
-
-  let response = client.request(url, httpMethod = HttpPut, body = $body)
-  client.close()
-
-  echo fmt"Removed label {label} from {taskKey} {response.status} {response.body}"
-
-proc addLabelToTask*(jira: Jira, taskKey: string, label: string) =
-  let 
-    headers = { "Content-Type": "application/json", "Authorization": basicAuthHeader(jira.login, jira.password) }
-    url = jira.baseUrl & "/rest/api/latest/issue/" & taskKey
-    body = %*{"update": {"labels": [{"add": label}]}}
-
-  var client = newHttpClient(sslContext=newContext(verifyMode=CVerifyNone))
-  client.headers = newHttpHeaders(headers)
-
-  let response = client.request(url, httpMethod = HttpPut, body = $body)
-  client.close()
-
-  echo fmt"Added label {label} to {taskKey} {response.status} {response.body}"
+  if response.ok():
+    echo fmt"Action: {action}, label: {label}, task: {taskKey}. Success"
+  else:
+    echo fmt"Action: {action}, label: {label}, task: {taskKey}. Fail. Status: {response.status}, body: {response.body}"
