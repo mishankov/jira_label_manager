@@ -1,35 +1,12 @@
-import os, parseopt
+import os, parseopt, options
 
-import toml_serialization
-
-import jira
+import config, jira
 
 type
-  ConfigActions* = object
-    jql*: string
-    removeLabels*: Option[seq[string]]
-    addLabels*: Option[seq[string]]
-
-  Config* = object
-    baseUrl*: string
-    authConfigPath*: string
-    ignoreSsl*: Option[bool]
-    actions*: seq[ConfigActions]
-
-  AuthConfig* = object
-    login*: string
-    password*: string
-    
   CliArgs* = object
     configFilePath*: string
     requestedHelp*: bool
 
-
-proc loadConfig*(filePath: string): Config =
-  return Toml.loadFile(filePath, Config)
-
-proc loadAuthConfig*(filePath: string): AuthConfig =
-  return Toml.loadFile(filePath, AuthConfig)
 
 proc parseCliArgs*(rawArgs: seq[string]): CliArgs =
   var args = CliArgs()
