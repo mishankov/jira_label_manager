@@ -1,20 +1,23 @@
-import base64, strformat, httpclient, net, json, uri
+import base64, strformat, httpclient, net, json, uri, strutils
 
 type
   BaiscAuth* = tuple[login: string, password: string]
   Header* = tuple[key: string, value: string]
   QueryParam* = tuple[key: string, value: string]
 
-  Request* = object
-    url*: string
-    basicAuth*: BaiscAuth
+  Method* = enum
+    GET, PUT, POST, PATCH, DELETE, HEAD, OPTIONS
 
   Response* = object
+    status*: int
     body*: string
 
 
 proc json*(response: Response): JsonNode = 
   return parseJson(response.body)
+
+proc ok*(response: Response): bool = 
+  return response.status < 400
 
 
 proc basicAuthHeader*(login: string, password: string): string = 
@@ -22,8 +25,7 @@ proc basicAuthHeader*(login: string, password: string): string =
   return fmt"Basic {encode(strToEncode)}"
 
 
-proc get*(url: string, headers: openArray[Header] = @[], queryParams: openArray[QueryParam] = @[], auth: BaiscAuth = ("", ""), ignoreSsl = false): Response = 
-
+proc request*(url: string, httpMethod: Method = Method.GET, headers: openArray[Header] = @[], queryParams: openArray[QueryParam] = @[], body: string = "", auth: BaiscAuth = ("", ""), ignoreSsl = false): Response = 
   # Prepare client
 
   var client: HttpClient
@@ -53,9 +55,42 @@ proc get*(url: string, headers: openArray[Header] = @[], queryParams: openArray[
   if queryParams.len() > 0:
     innerUrl &= fmt"?{encodeQuery(queryParams, usePlus=false)}"
 
+  # Prepare HTTP method
+
+  var innerMethod: HttpMethod = case httpMethod:
+    of Method.GET: HttpGet
+    of Method.PUT: HttpPut
+    of Method.POST: HttpPost
+    of Method.PATCH: HttpPatch
+    of Method.DELETE: HttpDelete
+    of Method.HEAD: HttpHead
+    of Method.OPTIONS: HttpOptions
+
   # Make request
 
-  let response = client.request(innerUrl)
+  let response = client.request(innerUrl, httpMethod = innerMethod, body = body)
   client.close()
 
-  return Response(body: response.body)
+  return Response(status: parseInt(response.status.strip()), body: response.body)
+
+
+proc get*(url: string, headers: openArray[Header] = @[], queryParams: openArray[QueryParam] = @[], auth: BaiscAuth = ("", ""), ignoreSsl = false): Response = 
+  return request(
+    url = url,
+    httpMethod = Method.GET, 
+    headers = headers,
+    queryParams = queryParams,
+    auth = auth,
+    ignoreSsl = ignoreSsl
+  )
+
+proc put*(url: string, headers: openArray[Header] = @[], queryParams: openArray[QueryParam] = @[], body: string = "", auth: BaiscAuth = ("", ""), ignoreSsl = false): Response = 
+  return request(
+    url = url,
+    httpMethod = Method.PUT, 
+    headers = headers,
+    queryParams = queryParams,
+    body = body,
+    auth = auth,
+    ignoreSsl = ignoreSsl
+  )
