@@ -20,19 +20,18 @@ proc ok*(response: Response): bool =
   return response.status < 400
 
 
-proc basicAuthHeader*(login: string, password: string): string = 
-  let strToEncode = login & ":" & password;
+proc basicAuthHeader(auth: BaiscAuth): string = 
+  let strToEncode = auth.login & ":" & auth.password;
   return fmt"Basic {encode(strToEncode)}"
 
 
 proc request*(url: string, httpMethod: Method = Method.GET, headers: openArray[Header] = @[], queryParams: openArray[QueryParam] = @[], body: string = "", auth: BaiscAuth = ("", ""), ignoreSsl = false): Response = 
   # Prepare client
 
-  var client: HttpClient
-  if ignoreSsl:
-    client = newHttpClient(sslContext=newContext(verifyMode=CVerifyNone))
-  else:
-    client = newHttpClient()
+  var client: HttpClient = if ignoreSsl:
+      newHttpClient(sslContext=newContext(verifyMode=CVerifyNone))
+    else:
+      newHttpClient()
 
   # Prepare headers
 
@@ -42,7 +41,7 @@ proc request*(url: string, httpMethod: Method = Method.GET, headers: openArray[H
     innerHeaders.add((header.key, header.value))
 
   if auth.login != "" and auth.password != "":
-    innerHeaders.add({"Authorization": basicAuthHeader(auth.login, auth.password)})
+    innerHeaders.add({"Authorization": auth.basicAuthHeader()})
 
   if innerHeaders.len() > 0:
     client.headers = newHttpHeaders(innerHeaders)
