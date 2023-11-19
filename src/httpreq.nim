@@ -16,6 +16,11 @@ type
 proc json*(response: Response): JsonNode = 
   return parseJson(response.body)
 
+
+proc to*[T](response: Response, t: typedesc[T]): T =
+  return to(response.json(), t)
+
+
 proc ok*(response: Response): bool = 
   return response.status < 400
 
