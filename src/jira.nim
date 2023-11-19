@@ -7,6 +7,8 @@ type
     baseUrl*: string
     login*: string
     password*: string
+    ignoreSsl*: bool
+
   JiraTask* = object
     key*: string
     summary*: string
@@ -19,7 +21,7 @@ proc getJiraTasks*(jira: Jira, jql: string): seq[JiraTask] =
     queryParams = {"jql": jql},
     headers = {"Content-Type": "application/json"},
     auth = (jira.login, jira.password),
-    ignoreSsl = true
+    ignoreSsl = jira.ignoreSsl
   )
 
   if response.ok():
@@ -40,7 +42,7 @@ proc labelAction*(jira: Jira, taskKey: string, action: JiraTaskAction, label: st
     headers = {"Content-Type": "application/json"},
     body = $ %*{"update": {"labels": [{$action: label}]}},
     auth = (jira.login, jira.password),
-    ignoreSsl = true
+    ignoreSsl = jira.ignoreSsl
   )
 
   if response.ok():

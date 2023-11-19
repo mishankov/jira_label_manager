@@ -13,6 +13,7 @@ type
   Config* = object
     baseUrl*: string
     authConfigPath*: string
+    ignoreSsl*: Option[bool]
     actions*: seq[ConfigActions]
 
   AuthConfig* = object
@@ -61,7 +62,12 @@ when isMainModule:
   else:
     let config = loadConfig(cliArgs.configFilePath)
     let authConfig = loadAuthConfig(config.authConfigPath)
-    let jira = Jira(baseUrl: config.baseUrl, login: authConfig.login, password: authConfig.password)
+    let jira = Jira(
+      baseUrl: config.baseUrl, 
+      login: authConfig.login, 
+      password: authConfig.password, 
+      ignoreSsl: config.ignoreSsl.get(false)
+    )
 
     for action in config.actions:
       if action.removeLabels.isSome() or action.addLabels.isSome():
