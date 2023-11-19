@@ -22,7 +22,7 @@ proc to*[T](response: Response, t: typedesc[T]): T =
 
 
 proc ok*(response: Response): bool = 
-  return response.status < 400
+  return response.status > 0 and response.status < 400 
 
 
 proc basicAuthHeader(auth: BaiscAuth): string = 
