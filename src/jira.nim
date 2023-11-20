@@ -1,6 +1,6 @@
 import json, strformat
 
-import httpreq
+import yahttp
 
 type
   Jira* = object

@@ -13,7 +13,7 @@ bin           = @["jira_label_manager"]
 
 # Dependencies
 
-requires "nim >= 2.0.0", "toml_serialization >= 0.2.6"
+requires "nim >= 2.0.0", "toml_serialization >= 0.2.6", "https://github.com/mishankov/yahttp >= 0.1.0"
 
 
 task devc, "Dev config":
