@@ -7,3 +7,4 @@ config.toml
 !jira_label_manager/config.toml
 
 *.7z
+*.exe
