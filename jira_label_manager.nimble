@@ -2,7 +2,7 @@ import strformat
 
 # Package
 
-version       = "0.1.0"
+version       = "0.2.0"
 author        = "Denis Mishankov"
 description   = "A new awesome nimble package"
 license       = "MIT"
@@ -13,7 +13,7 @@ bin           = @["jira_label_manager"]
 
 # Dependencies
 
-requires "nim >= 2.0.0", "toml_serialization >= 0.2.6", "https://github.com/mishankov/yahttp >= 0.1.0"
+requires "nim >= 2.0.0", "toml_serialization >= 0.2.6", "yahttp >= 0.2.1"
 
 
 task devc, "Dev config":

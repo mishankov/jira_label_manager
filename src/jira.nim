@@ -18,7 +18,7 @@ type
 proc getJiraTasks*(jira: Jira, jql: string): seq[JiraTask] =
   let response = get(
     url = jira.baseUrl & "/rest/api/latest/search",
-    queryParams = {"jql": jql},
+    query = {"jql": jql},
     headers = {"Content-Type": "application/json"},
     auth = (jira.login, jira.password),
     ignoreSsl = jira.ignoreSsl

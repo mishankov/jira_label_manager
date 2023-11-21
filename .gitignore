@@ -1,4 +1,9 @@
 build/
+
 auth.toml
 config.toml
+
+!jira_label_manager/auth.toml
+!jira_label_manager/config.toml
+
 *.7z
