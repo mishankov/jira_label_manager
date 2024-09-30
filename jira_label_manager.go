@@ -60,7 +60,31 @@ func main() {
 			os.Exit(1)
 		}
 
-		fmt.Println("Config:", config, "AuthConfig:", authConfig)
+		jira := Jira{baseUrl: config.BaseUrl, login: authConfig.Login, password: authConfig.Password}
 
+		for _, action := range config.Actions {
+			if len(action.RemoveLabels) > 0 && len(action.AddLabels) > 0 {
+				tasks, err := jira.getJiraTasksByJQL(action.Jql)
+
+				if err != nil {
+					fmt.Println("Error:", err.Error())
+					os.Exit(1)
+				}
+
+				for _, task := range tasks {
+					if len(action.RemoveLabels) > 0 {
+						for _, label := range action.RemoveLabels {
+							fmt.Println("Removing label", label, "for task", task.key)
+						}
+					}
+
+					if len(action.AddLabels) > 0 {
+						for _, label := range action.AddLabels {
+							fmt.Println("Adding label", label, "for task", task.key)
+						}
+					}
+				}
+			}
+		}
 	}
 }
