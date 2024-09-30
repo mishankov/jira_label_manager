@@ -63,7 +63,7 @@ func main() {
 		jira := Jira{baseUrl: config.BaseUrl, login: authConfig.Login, password: authConfig.Password}
 
 		for _, action := range config.Actions {
-			if len(action.RemoveLabels) > 0 && len(action.AddLabels) > 0 {
+			if len(action.RemoveLabels) > 0 || len(action.AddLabels) > 0 {
 				tasks, err := jira.getJiraTasksByJQL(action.Jql)
 
 				if err != nil {
@@ -75,12 +75,22 @@ func main() {
 					if len(action.RemoveLabels) > 0 {
 						for _, label := range action.RemoveLabels {
 							fmt.Println("Removing label", label, "for task", task.key)
+							err := jira.labelAction(task.key, JiraTaskAction{isRemove: true}, label)
+
+							if err != nil {
+								fmt.Println("Error:", err.Error())
+							}
 						}
 					}
 
 					if len(action.AddLabels) > 0 {
 						for _, label := range action.AddLabels {
 							fmt.Println("Adding label", label, "for task", task.key)
+							err := jira.labelAction(task.key, JiraTaskAction{isAdd: true}, label)
+
+							if err != nil {
+								fmt.Println("Error:", err.Error())
+							}
 						}
 					}
 				}
