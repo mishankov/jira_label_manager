@@ -46,5 +46,21 @@ func main() {
 		fmt.Println("Launching interactive mode")
 	case clArgs.isConfigFile:
 		fmt.Println("Loading config file:", clArgs.configFileName)
+		config, err := loadConfig(clArgs.configFileName)
+
+		if err != nil {
+			fmt.Println("Error:", err.Error())
+			os.Exit(1)
+		}
+
+		authConfig, err := loadAuthConfig(config.AuthConfigPath)
+
+		if err != nil {
+			fmt.Println("Error:", err.Error())
+			os.Exit(1)
+		}
+
+		fmt.Println("Config:", config, "AuthConfig:", authConfig)
+
 	}
 }
