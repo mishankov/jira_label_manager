@@ -23,6 +23,10 @@ type JiraTask struct {
 	summary string
 }
 
+func (jt JiraTask) String() string {
+	return fmt.Sprintf("%v - %q", jt.key, jt.summary)
+}
+
 type JiraTaskAction struct {
 	isAdd    bool
 	isRemove bool
