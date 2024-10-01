@@ -26,7 +26,7 @@ jobs:
         go-version: '1.23'
 
     - name: Build
-      run: go build jira_label_manager -o release/
+      run: go build -o release/ jira_label_manager
     
     - name: Upload executable
       uses: actions/upload-artifact@v4
