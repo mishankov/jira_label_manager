@@ -3,8 +3,8 @@ build/
 auth.toml
 config.toml
 
-!jira_label_manager/auth.toml
-!jira_label_manager/config.toml
+!release/auth.toml
+!release/config.toml
 
 *.7z
 *.exe
