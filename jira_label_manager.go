@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"os"
@@ -46,15 +45,13 @@ func main() {
 		fmt.Println("--help, -h:   prints this message")
 	case clArgs.isInteractive:
 		fmt.Println("Launching in interactive mode")
-		fmt.Print(`Config path (default is "config.toml"): `)
 
-		reader := bufio.NewReader(os.Stdin)
-		configFileName, err := reader.ReadString('\n')
+		configFileName, err := userInput(`Config path (default is "config.toml"): `)
 		if err != nil {
 			fmt.Println("Error:", err.Error())
 			os.Exit(1)
 		}
-		configFileName = strings.TrimSpace(configFileName)
+
 		if len(configFileName) == 0 {
 			configFileName = "config.toml"
 		}
@@ -74,17 +71,13 @@ func main() {
 		jira := Jira{baseUrl: config.BaseUrl, login: authConfig.Login, password: authConfig.Password}
 
 		for {
-			fmt.Print("Input JQL: ")
-			jql, err := reader.ReadString('\n')
+			fmt.Print()
+			jql, err := userInput("Input JQL: ")
 			if err != nil {
 				fmt.Println("Error:", err.Error())
 				os.Exit(1)
 			}
-			jql = strings.TrimSpace(jql)
-			if err != nil {
-				fmt.Println("Error:", err.Error(), jql)
-				os.Exit(1)
-			}
+
 			if len(jql) == 0 {
 				fmt.Println("No JQL entered. Try again")
 				continue
@@ -101,21 +94,21 @@ func main() {
 				fmt.Println(task)
 			}
 
-			fmt.Print("Input comma-separated lables to remove form tasks: ")
-			labelsToRemove, err := reader.ReadString('\n')
+			fmt.Print()
+			labelsToRemove, err := userInput("Input comma-separated lables to remove form tasks: ")
 			if err != nil {
 				fmt.Println("Error:", err.Error())
 				os.Exit(1)
 			}
-			labelsToRemoveList := strings.Split(strings.TrimSpace(labelsToRemove), ",")
+			labelsToRemoveList := strings.Split(labelsToRemove, ",")
 
-			fmt.Print("Input comma-separated lables to add to tasks: ")
-			labelsToAdd, err := reader.ReadString('\n')
+			fmt.Print()
+			labelsToAdd, err := userInput("Input comma-separated lables to add to tasks: ")
 			if err != nil {
 				fmt.Println("Error:", err.Error())
 				os.Exit(1)
 			}
-			labelsToAddList := strings.Split(strings.TrimSpace(labelsToAdd), ",")
+			labelsToAddList := strings.Split(labelsToAdd, ",")
 
 			for _, task := range tasks {
 				for _, label := range labelsToRemoveList {
@@ -135,14 +128,13 @@ func main() {
 				}
 			}
 
-			fmt.Print("Continue? (y/n): ")
-			answer, err := reader.ReadString('\n')
+			fmt.Print()
+			answer, err := userInput("Continue? (y/n): ")
 			if err != nil {
 				fmt.Println("Error:", err.Error())
 				os.Exit(1)
 			}
 
-			answer = strings.TrimSpace(answer)
 			if answer != "y" {
 				fmt.Println("Ciao!")
 				break
