@@ -1,5 +1,5 @@
 baseUrl = "https://jira.your.com"
-authConfigPath = "./jira_label_manager/auth.toml"
+authConfigPath = "auth.toml"
 
 [[actions]]
 jql = 'labels = "my_label"'
