@@ -68,7 +68,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		jira := Jira{baseUrl: config.BaseUrl, login: authConfig.Login, password: authConfig.Password}
+		jira := Jira{baseUrl: config.BaseUrl, login: authConfig.Login, password: authConfig.Password, ignoreSsl: config.IgnoreSsl}
 
 		for {
 			fmt.Print()
@@ -141,7 +141,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		jira := Jira{baseUrl: config.BaseUrl, login: authConfig.Login, password: authConfig.Password}
+		jira := Jira{baseUrl: config.BaseUrl, login: authConfig.Login, password: authConfig.Password, ignoreSsl: config.IgnoreSsl}
 
 		for _, action := range config.Actions {
 			if len(action.RemoveLabels) > 0 || len(action.AddLabels) > 0 {

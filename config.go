@@ -15,6 +15,7 @@ type ConfigActions struct {
 type Config struct {
 	BaseUrl        string
 	AuthConfigPath string
+	IgnoreSsl      bool
 	Actions        []ConfigActions
 }
 

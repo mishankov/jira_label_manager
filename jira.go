@@ -15,9 +15,10 @@ import (
 )
 
 type Jira struct {
-	baseUrl  string
-	login    string
-	password string
+	baseUrl   string
+	login     string
+	password  string
+	ignoreSsl bool
 }
 
 type JiraTask struct {
@@ -109,10 +110,16 @@ func (j Jira) getJiraTasksByJQL(jql string) ([]JiraTask, error) {
 func (j Jira) labelAction(taskKey string, action JiraTaskAction, label string) error {
 	actionString := action.String()
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	var client http.Client
+	if j.ignoreSsl {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		client = http.Client{Transport: tr}
+	} else {
+		client = http.Client{}
 	}
-	client := http.Client{Transport: tr}
+
 	req, err := http.NewRequest("PUT", j.baseUrl+"/rest/api/latest/issue/"+taskKey, bytes.NewBuffer([]byte(fmt.Sprintf(`{"update": {"labels": [{%q: %q}]}}`, actionString, label))))
 
 	if err != nil {
