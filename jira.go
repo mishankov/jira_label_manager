@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 )
 
 type Jira struct {
@@ -134,37 +135,38 @@ func (j Jira) labelAction(taskKey string, action JiraTaskAction, label string) e
 	return nil
 }
 
-func (j Jira) labelActionWrapper(task string, action JiraTaskAction, label string, ch chan error) error {
+func (j Jira) labelActionWrapper(task string, action JiraTaskAction, label string, wg *sync.WaitGroup) error {
 	fmt.Println("Removing label", label, "for task", task)
 	err := j.labelAction(task, action, label)
 	if err != nil {
 		fmt.Println("Error:", err.Error())
 	}
 
-	ch <- err
+	wg.Done()
 
 	return err
 }
 
 func (j Jira) applyLabelChanges(tasks []JiraTask, labelsToRemove []string, labelsToAdd []string) {
-	ch := make(chan error)
+	var wg sync.WaitGroup
+
 	for _, task := range tasks {
 		for _, label := range labelsToRemove {
 			label := strings.TrimSpace(label)
 			if len(label) > 0 {
-				go j.labelActionWrapper(task.key, JiraTaskAction{isRemove: true}, label, ch)
+				wg.Add(1)
+				go j.labelActionWrapper(task.key, JiraTaskAction{isRemove: true}, label, &wg)
 			}
 		}
 
 		for _, label := range labelsToAdd {
 			label := strings.TrimSpace(label)
 			if len(label) > 0 {
-				go j.labelActionWrapper(task.key, JiraTaskAction{isAdd: true}, label, ch)
+				wg.Add(1)
+				go j.labelActionWrapper(task.key, JiraTaskAction{isAdd: true}, label, &wg)
 			}
 		}
 	}
 
-	for err := range ch {
-		fmt.Println(err)
-	}
+	wg.Wait()
 }
