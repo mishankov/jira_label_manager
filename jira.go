@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type Jira struct {
@@ -131,4 +132,30 @@ func (j Jira) labelAction(taskKey string, action JiraTaskAction, label string) e
 	}
 
 	return nil
+}
+
+func (j Jira) applyLabelChanges(tasks []JiraTask, labelsToRemove []string, labelsToAdd []string) {
+	for _, task := range tasks {
+		for _, label := range labelsToRemove {
+			label := strings.TrimSpace(label)
+			if len(label) > 0 {
+				fmt.Println("Removing label", label, "for task", task.key)
+				err := j.labelAction(task.key, JiraTaskAction{isRemove: true}, label)
+				if err != nil {
+					fmt.Println("Error:", err.Error())
+				}
+			}
+		}
+
+		for _, label := range labelsToAdd {
+			label := strings.TrimSpace(label)
+			if len(label) > 0 {
+				fmt.Println("Adding label", label, "for task", task.key)
+				err := j.labelAction(task.key, JiraTaskAction{isAdd: true}, label)
+				if err != nil {
+					fmt.Println("Error:", err.Error())
+				}
+			}
+		}
+	}
 }

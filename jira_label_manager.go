@@ -110,23 +110,7 @@ func main() {
 			}
 			labelsToAddList := strings.Split(labelsToAdd, ",")
 
-			for _, task := range tasks {
-				for _, label := range labelsToRemoveList {
-					label := strings.TrimSpace(label)
-					if len(label) > 0 {
-						fmt.Println("Removing label", label, "for task", task.key)
-						jira.labelAction(task.key, JiraTaskAction{isRemove: true}, label)
-					}
-				}
-
-				for _, label := range labelsToAddList {
-					label := strings.TrimSpace(label)
-					if len(label) > 0 {
-						fmt.Println("Adding label", label, "for task", task.key)
-						jira.labelAction(task.key, JiraTaskAction{isAdd: true}, label)
-					}
-				}
-			}
+			jira.applyLabelChanges(tasks, labelsToRemoveList, labelsToAddList)
 
 			fmt.Print()
 			answer, err := userInput("Continue? (y/n): ")
@@ -168,29 +152,7 @@ func main() {
 					os.Exit(1)
 				}
 
-				for _, task := range tasks {
-					if len(action.RemoveLabels) > 0 {
-						for _, label := range action.RemoveLabels {
-							fmt.Println("Removing label", label, "for task", task.key)
-							err := jira.labelAction(task.key, JiraTaskAction{isRemove: true}, label)
-
-							if err != nil {
-								fmt.Println("Error:", err.Error())
-							}
-						}
-					}
-
-					if len(action.AddLabels) > 0 {
-						for _, label := range action.AddLabels {
-							fmt.Println("Adding label", label, "for task", task.key)
-							err := jira.labelAction(task.key, JiraTaskAction{isAdd: true}, label)
-
-							if err != nil {
-								fmt.Println("Error:", err.Error())
-							}
-						}
-					}
-				}
+				jira.applyLabelChanges(tasks, action.RemoveLabels, action.AddLabels)
 			}
 		}
 	}
