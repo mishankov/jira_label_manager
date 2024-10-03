@@ -134,28 +134,37 @@ func (j Jira) labelAction(taskKey string, action JiraTaskAction, label string) e
 	return nil
 }
 
+func (j Jira) labelActionWrapper(task string, action JiraTaskAction, label string, ch chan error) error {
+	fmt.Println("Removing label", label, "for task", task)
+	err := j.labelAction(task, action, label)
+	if err != nil {
+		fmt.Println("Error:", err.Error())
+	}
+
+	ch <- err
+
+	return err
+}
+
 func (j Jira) applyLabelChanges(tasks []JiraTask, labelsToRemove []string, labelsToAdd []string) {
+	ch := make(chan error)
 	for _, task := range tasks {
 		for _, label := range labelsToRemove {
 			label := strings.TrimSpace(label)
 			if len(label) > 0 {
-				fmt.Println("Removing label", label, "for task", task.key)
-				err := j.labelAction(task.key, JiraTaskAction{isRemove: true}, label)
-				if err != nil {
-					fmt.Println("Error:", err.Error())
-				}
+				go j.labelActionWrapper(task.key, JiraTaskAction{isRemove: true}, label, ch)
 			}
 		}
 
 		for _, label := range labelsToAdd {
 			label := strings.TrimSpace(label)
 			if len(label) > 0 {
-				fmt.Println("Adding label", label, "for task", task.key)
-				err := j.labelAction(task.key, JiraTaskAction{isAdd: true}, label)
-				if err != nil {
-					fmt.Println("Error:", err.Error())
-				}
+				go j.labelActionWrapper(task.key, JiraTaskAction{isAdd: true}, label, ch)
 			}
 		}
+	}
+
+	for err := range ch {
+		fmt.Println(err)
 	}
 }
