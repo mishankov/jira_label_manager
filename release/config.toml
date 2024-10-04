@@ -1,5 +1,6 @@
 baseUrl = "https://jira.your.com"
 authConfigPath = "auth.toml"
+ignoreSsl = false
 
 [[actions]]
 jql = 'labels = "my_label"'
