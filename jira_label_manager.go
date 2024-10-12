@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/mishankov/go-utlz/cliutils"
 )
 
 type CLArgs struct {
@@ -46,7 +48,7 @@ func main() {
 	case clArgs.isInteractive:
 		fmt.Println("Launching in interactive mode")
 
-		configFileName, err := userInput(`Config path (default is "config.toml"): `)
+		configFileName, err := cliutils.UserInput(`Config path (default is "config.toml"): `)
 		if err != nil {
 			fmt.Println("Error:", err.Error())
 			os.Exit(1)
@@ -72,7 +74,7 @@ func main() {
 
 		for {
 			fmt.Print()
-			jql, err := userInput("Input JQL: ")
+			jql, err := cliutils.UserInput("Input JQL: ")
 			if err != nil {
 				fmt.Println("Error:", err.Error())
 				os.Exit(1)
@@ -95,7 +97,7 @@ func main() {
 			}
 
 			fmt.Print()
-			labelsToRemove, err := userInput("Input comma-separated lables to remove form tasks: ")
+			labelsToRemove, err := cliutils.UserInput("Input comma-separated lables to remove form tasks: ")
 			if err != nil {
 				fmt.Println("Error:", err.Error())
 				os.Exit(1)
@@ -103,7 +105,7 @@ func main() {
 			labelsToRemoveList := strings.Split(labelsToRemove, ",")
 
 			fmt.Print()
-			labelsToAdd, err := userInput("Input comma-separated lables to add to tasks: ")
+			labelsToAdd, err := cliutils.UserInput("Input comma-separated lables to add to tasks: ")
 			if err != nil {
 				fmt.Println("Error:", err.Error())
 				os.Exit(1)
@@ -113,7 +115,7 @@ func main() {
 			jira.applyLabelChanges(tasks, labelsToRemoveList, labelsToAddList)
 
 			fmt.Print()
-			answer, err := userInput("Continue? (y/n): ")
+			answer, err := cliutils.UserInput("Continue? (y/n): ")
 			if err != nil {
 				fmt.Println("Error:", err.Error())
 				os.Exit(1)
